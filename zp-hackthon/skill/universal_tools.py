@@ -1,5 +1,5 @@
 """
-通用监控平台 Skill 工具
+OpenClaw Skill 工具 - 通用监控平台
 支持多模板、自定义任务类型、动态表单
 """
 
@@ -13,6 +13,40 @@ from services.universal_monitor import (
 
 # 获取服务实例
 monitor_service = get_monitor_service()
+
+
+def list_field_types() -> str:
+    """
+    列出所有支持的字段类型（用于创建自定义模板）
+    
+    Returns:
+        字段类型说明
+    """
+    types_info = [
+        ("text", "单行文本", "短文本，如标题、名称"),
+        ("textarea", "多行文本", "长文本，如描述、备注"),
+        ("number", "数字", "整数或小数"),
+        ("select", "单选", "从预设选项中选择一个"),
+        ("multi_select", "多选", "从预设选项中选择多个"),
+        ("date", "日期", "日期选择"),
+        ("datetime", "日期时间", "日期和时间选择"),
+        ("boolean", "布尔", "是/否选择"),
+        ("url", "链接", "URL链接"),
+        ("price", "价格", "价格格式（自动识别金额）"),
+        ("contact", "联系方式", "自动脱敏处理"),
+        ("tags", "标签", "多个标签"),
+    ]
+    
+    lines = ["📋 支持的字段类型\n", "=" * 50]
+    
+    for type_id, label, desc in types_info:
+        lines.append(f"\n{type_id:15} - {label}")
+        lines.append(f"{'':17}  {desc}")
+    
+    lines.append("\n" + "=" * 50)
+    lines.append("\n创建模板时使用这些 type 值")
+    
+    return "\n".join(lines)
 
 
 def list_templates(category: str = None) -> str:
@@ -362,7 +396,8 @@ def create_custom_template(name: str,
         category: 分类
         fields_json: 字段定义（JSON数组），示例:
             [
-                {"name": "title", "label": "标题", "type": "text", "required": true},
+                {"name": "title", "label": "标题", "type": "text", "required": true, 
+                 "ai_extract_prompt": "提取标题"},
                 {"name": "price", "label": "价格", "type": "price"}
             ]
         icon: 模板图标
@@ -396,6 +431,59 @@ create_task("我的任务", "{template.id}", "关键词")"""
         
     except Exception as e:
         return f"❌ 创建模板失败: {e}"
+
+
+def get_template_example() -> str:
+    """
+    获取创建自定义模板的示例
+    
+    Returns:
+        示例代码
+    """
+    return """📝 自定义模板创建示例
+
+【示例：外卖优惠券监控】
+
+create_custom_template(
+    name="外卖优惠券",
+    description="监控外卖平台优惠券信息",
+    category="优惠",
+    icon="🍔",
+    fields_json='''[
+        {"name": "platform", "label": "平台", "type": "select", 
+         "options": ["美团", "饿了么"], "required": true,
+         "ai_extract_prompt": "提取外卖平台名称"},
+        
+        {"name": "discount", "label": "优惠力度", "type": "text",
+         "ai_extract_prompt": "提取优惠内容，如满30减15"},
+        
+        {"name": "min_spend", "label": "最低消费", "type": "price",
+         "ai_extract_prompt": "提取最低消费金额"},
+        
+        {"name": "valid_until", "label": "有效期", "type": "date",
+         "ai_extract_prompt": "提取有效期"},
+        
+        {"name": "source", "label": "来源", "type": "text",
+         "ai_extract_prompt": "提取优惠券来源"}
+    ]'''
+)
+
+【字段说明】
+• name: 字段标识（英文，代码中使用）
+• label: 显示名称（中文）
+• type: 字段类型（使用 list_field_types() 查看所有类型）
+• required: 是否必填（true/false）
+• options: 选项列表（select/multi_select 类型需要）
+• ai_extract_prompt: 告诉AI如何提取这个字段的值
+• default_value: 默认值（可选）
+
+【常用过滤条件】
+创建任务时可以使用的 filters 参数：
+• {"price_max": 100} - 价格不超过100
+• {"city": "北京"} - 城市为北京
+• {"category_contains": "数码"} - 分类包含"数码"
+• {"status": "全新"} - 状态为全新
+"""
 
 
 # 快捷命令
