@@ -1,24 +1,20 @@
-# Web Framework and Extensions
-Flask
-Werkzeug
-flask-login
-flask-caching
-flask-limiter
-Flask-SQLAlchemy
+# TicketHunter 依赖
 
-# Database
-SQLAlchemy
+# Web 框架
+Flask>=2.3.0
+Flask-SQLAlchemy>=3.0.0
+Flask-Caching>=2.0.0
+Flask-Limiter>=3.0.0
 
-# AI and API
-requests
-sseclient-py
-mcp
-httpx
+# 数据库
+SQLAlchemy>=2.0.0
 
-# Utils
-python-dotenv
-pytz
+# HTTP 客户端
+requests>=2.28.0
+sseclient-py>=1.8.0
 
-# Development
-black
-flake8
+# 工具
+python-dotenv>=1.0.0
+
+# 可选：定时任务（用于高级监控）
+# APScheduler>=3.10.0

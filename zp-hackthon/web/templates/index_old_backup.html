@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>票务信息查询系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #E31C25;  /* 包豪斯红 */
+            --bg-color: #FFFFFF;
+            --text-color: #1A1A1A;
+            --border-color: #E5E5E5;
+            --hover-color: #F5F5F5;
+            --accent-color: #FFD700;  /* 点缀金色 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background-color: var(--bg-color);
+            border-bottom: 2px solid var(--border-color);
+            padding: 1rem 0;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-color) !important;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            background: var(--bg-color);
+            border-right: 2px solid var(--border-color);
+            padding: 2rem;
+            height: calc(100vh - 72px);  /* 减去导航栏高度 */
+            position: fixed;
+            top: 72px;
+            left: 0;
+            width: 320px;
+            overflow-y: auto;
+        }
+        
+        /* 搜索框样式 */
+        .search-form {
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            border: 2px solid var(--border-color);
+            border-radius: 0;
+            padding: 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: none;
+        }
+        
+        .search-btn {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 0;
+            padding: 1rem 1.5rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .search-btn:hover {
+            background-color: #B31B1B;
+        }
+        
+        /* 任务列表样式 */
+        .task-item {
+            border: 2px solid var(--border-color);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .task-item:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .task-item.active {
+            border-color: var(--primary-color);
+            background-color: rgba(227, 28, 37, 0.05);
+        }
+        
+        .task-keyword {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .task-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0;
+        }
+        
+        /* 主内容区样式 */
+        .main-content {
+            margin-left: 320px;
+            padding: 2rem 3rem;
+        }
+        
+        /* 表格样式 */
+        .table {
+            border: 2px solid var(--border-color);
+        }
+        
+        .table thead th {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            font-weight: 600;
+            padding: 1rem;
+            border: none;
+        }
+        
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            border-radius: 0;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-danger {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline-danger:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        /* 状态标签样式 */
+        .badge {
+            border-radius: 0;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+        }
+        
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .task-item, .table tr {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .task-stats {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            font-weight: normal;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        /* 表格单元格样式优化 */
+        .table td {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* 鼠标悬停时显示完整内容 */
+        .table td:hover {
+            white-space: normal;
+            word-break: break-word;
+        }
+        
+        /* 加载动画样式 */
+        .spinner-border {
+            width: 2rem;
+            height: 2rem;
+        }
+        
+        /* 空状态样式 */
+        .empty-state {
+            color: var(--text-color);
+            opacity: 0.5;
+        }
+        
+        /* 按钮组样式 */
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-outline-primary {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-ticket-perforated-fill me-2"></i>
+                TicketHunter
+            </a>
+        </div>
+    </nav>
+
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- 左侧任务菜单 -->
+            <div class="col-auto">
+                <div class="sidebar">
+                    <form id="searchForm" class="search-form">
+                        <div class="input-group">
+                            <input type="text" id="keyword" class="form-control search-input" 
+                                   placeholder="输入关键词搜索" aria-label="搜索关键词">
+                            <button type="submit" class="btn search-btn" title="开始搜索">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="task-list">
+                        <!-- 任务列表通过JS动态加载 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col main-content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 id="currentTaskTitle" class="m-0">搜索结果</h4>
+                    <button id="cancelTaskBtn" class="btn btn-outline-danger d-none">
+                        取消任务
+                    </button>
+                </div>
+                
+                <!-- 结果表格 -->
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>演出名称</th>
+                                <th>城市</th>
+                                <th>场次日期</th>
+                                <th>区域</th>
+                                <th>价格</th>
+                                <th>数量</th>
+                                <th>联系方式</th>
+                                <th>备注</th>
+                                <th>发布时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <!-- 搜索结果将通过JS动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script>
+        let currentTaskId = null;
+        let eventSource = null;
+
+        // 定义状态样式映射
+        const statusStyles = {
+            'running': { bg: 'primary', text: '监控中' },
+            'stopped': { bg: 'warning', text: '已中止' },
+            'failed': { bg: 'danger', text: '监控失败' }
+        };
+
+        // 格式化日期时间
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // 加载任务列表
+        function loadTasks() {
+            $.get('/tasks', function(response) {
+                $('.task-list').empty();
+                if (!response || response.length === 0) {
+                    $('.task-list').html(`
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox mb-2" style="font-size: 2rem;"></i>
+                            <p>暂无搜索任务</p>
+                        </div>
+                    `);
+                    currentTaskId = null;
+                    $('#resultsBody').html(`
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem;"></i>
+                                暂无搜索结果
+                            </td>
+                        </tr>
+                    `);
+                    return;
+                }
+                
+                // 如果没有选中的任务，自动选中第一个
+                if (!currentTaskId && response.length > 0) {
+                    currentTaskId = response[0].id;
+                    $('#currentTaskTitle').text(`"${response[0].msg}" 的搜索结果`);
+                }
+                
+                response.forEach(task => {
+                    const taskHtml = `
+                        <div class="task-item ${task.id === currentTaskId ? 'active' : ''}" 
+                             data-task-id="${task.id}">
+                            <div class="task-header d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="task-keyword">${task.msg || '搜索任务'}</span>
+                                    <div class="mt-2">
+                                        <span class="badge bg-${getStatusBadgeClass(task.status)}">${getStatusText(task.status)}</span>
+                                    </div>
+                                </div>
+                                <div class="task-actions">
+                                    <button class="btn btn-sm btn-outline-danger stop-task" 
+                                            data-task-id="${task.id}"
+                                            ${task.status !== 'running' ? 'disabled' : ''}>
+                                        <i class="bi bi-stop-circle"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-dark delete-task" 
+                                            data-task-id="${task.id}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="task-stats">
+                                ${task.message ? `<small class="text-muted">${task.message}</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    $('.task-list').append(taskHtml);
+                });
+
+                // 只在任务首次完成时加载结果（避免频繁刷新）
+                const currentTask = response.find(task => task.id === currentTaskId);
+                if (currentTask && currentTask.status === 'completed' && lastTaskStatus === 'running') {
+                    console.log('任务已完成，加载最终结果');
+                    lastTaskStatus = currentTask.status;
+                    // 延迟加载，确保所有 SSE 事件都已处理
+                    setTimeout(() => loadResults(), 1000);
+                } else if (currentTask) {
+                    lastTaskStatus = currentTask.status;
+                }
+            });
+        }
+
+        // 初始化 SSE 连接
+        function initSSE() {
+            const eventSource = new EventSource('/stream');
+            
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log('收到 SSE 事件:', data.type, data);
+                
+                if (data.type === 'task_update') {
+                    // 只更新任务列表，不重新加载结果
+                    updateTaskStatus(data.data);
+                } else if (data.type === 'ticket_update' && data.data.task_id === currentTaskId) {
+                    // 实时添加新的票务信息到表格
+                    const ticket = data.data.ticket;
+                    console.log('添加票务到表格:', ticket.event_name);
+                    
+                    // 检查是否已经存在（避免重复）
+                    const existingRows = $('#resultsBody tr');
+                    let isDuplicate = false;
+                    existingRows.each(function() {
+                        const rowText = $(this).text();
+                        if (rowText.includes(ticket.event_name) && 
+                            rowText.includes(ticket.city) && 
+                            rowText.includes(ticket.price)) {
+                            isDuplicate = true;
+                            return false; // 跳出循环
+                        }
+                    });
+                    
+                    if (isDuplicate) {
+                        console.log('票务已存在，跳过:', ticket.event_name);
+                        return;
+                    }
+                    
+                    const row = `
+                        <tr>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <strong>${ticket.event_name || '-'}</strong>
+                                </div>
+                            </td>
+                            <td>${ticket.city || '-'}</td>
+                            <td>${ticket.event_date || '-'}</td>
+                            <td>${ticket.area || '-'}</td>
+                            <td>${ticket.price || '-'}</td>
+                            <td>${ticket.quantity || '-'}</td>
+                            <td>${ticket.contact || '-'}</td>
+                            <td>${ticket.notes || '-'}</td>
+                            <td>${formatDateTime(data.timestamp) || '-'}</td>
+                            <td>
+                                <div class="btn-group">
+                                    ${ticket.note_url ? `
+                                        <a href="${ticket.note_url}" target="_blank" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            查看原文
+                                        </a>
+                                    ` : ''}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    $('#resultsBody').append(row);
+                }
+            };
+            
+            eventSource.onerror = function() {
+                console.log('SSE连接错误，5秒后重试...');
+                eventSource.close();
+                setTimeout(initSSE, 5000);
+            };
+        }
+        
+        // 更新任务状态（不重新加载结果）
+        function updateTaskStatus(taskData) {
+            const taskItem = $(`.task-item[data-task-id="${taskData.task_id}"]`);
+            if (taskItem.length > 0) {
+                // 更新状态徽章
+                const badge = taskItem.find('.badge');
+                badge.removeClass('bg-primary bg-warning bg-danger bg-success');
+                badge.addClass('bg-' + getStatusBadgeClass(taskData.status));
+                badge.text(getStatusText(taskData.status));
+                
+                // 更新消息
+                const statsDiv = taskItem.find('.task-stats small');
+                if (taskData.message) {
+                    statsDiv.text(taskData.message);
+                }
+            } else {
+                // 新任务，重新加载任务列表
+                loadTasks();
+            }
+        }
+
+        // 获取任务状态样式
+        function getStatusBadgeClass(status) {
+            const statusMap = {
+                'running': 'primary',
+                'completed': 'success',
+                'stopped': 'warning',
+                'failed': 'danger'
+            };
+            return statusMap[status] || 'primary';
+        }
+
+        // 获取任务状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                'running': '执行中',
+                'completed': '已完成',
+                'stopped': '已中止',
+                'failed': '失败'
+            };
+            return statusMap[status] || '执行中';
+        }
+
+        // 加载结果
+        function loadResults() {
+            if (!currentTaskId) return;
+            
+            // 清空现有结果
+            $('#resultsBody').empty();
+            
+            // 显示加载状态
+            $('#resultsBody').html(`
+                <tr>
+                    <td colspan="10" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <div class="mt-2">加载中...</div>
+                    </td>
+                </tr>
+            `);
+            
+            // 加载任务结果，传递 task_id 参数
+            $.get('/api/tickets', {task_id: currentTaskId}, function(response) {
+                console.log('收到票务数据:', response);
+                displayResults(response);
+            }).fail(function(xhr, status, error) {
+                console.error('加载票务数据失败:', status, error);
+                $('#resultsBody').html(`
+                    <tr>
+                        <td colspan="10" class="text-center py-4 text-danger">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            加载失败，请稍后重试
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        // 切换任务
+        function switchTask(taskId, skipLoadResults = false) {
+            if (currentTaskId === taskId) return;
+            
+            currentTaskId = taskId;
+            lastTaskStatus = null; // 重置状态跟踪
+            
+            $('.task-item').removeClass('active');
+            $(`.task-item[data-task-id="${taskId}"]`).addClass('active');
+            
+            // 更新标题
+            const taskItem = $(`.task-item[data-task-id="${taskId}"]`);
+            const keyword = taskItem.find('.task-keyword').text();
+            $('#currentTaskTitle').text(`"${keyword}" 的搜索结果`);
+            
+            // 只在不跳过时加载结果（新任务在实时添加，不需要立即加载）
+            if (!skipLoadResults) {
+                loadResults();
+            } else {
+                console.log('跳过 loadResults，等待实时推送');
+                // 清空表格，准备接收实时数据
+                $('#resultsBody').html(`
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <div class="mt-2">正在搜索...</div>
+                        </td>
+                    </tr>
+                `);
+            }
+        }
+
+        // 提交搜索
+        $('#searchForm').on('submit', function(e) {
+            e.preventDefault();
+            const keyword = $('#keyword').val().trim();
+            if (!keyword) return;
+            
+            // 显示加载状态
+            $('.task-list').prepend(`
+                <div class="task-item">
+                    <div class="task-header">
+                        <span class="task-keyword">${keyword}</span>
+                        <span class="badge bg-primary">执行中</span>
+                    </div>
+                    <div class="task-stats">
+                        <small>正在搜索...</small>
+                    </div>
+                </div>
+            `);
+            
+            // 创建新任务并添加到监控
+            $.post('/search', {keyword: keyword}, function(response) {
+                if (response.success) {
+                    $('#keyword').val('');
+                    // 添加到监控
+                    $.post('/api/monitor/add_keyword', {keyword: keyword}, function(response) {
+                        if (response.success) {
+                            console.log('关键词已添加到监控');
+                        }
+                    });
+                    
+                    // 延迟1秒后刷新任务列表并切换到新任务
+                    setTimeout(() => {
+                        $.get('/tasks', function(tasks) {
+                            if (tasks && tasks.length > 0) {
+                                // 获取最新创建的任务（第一个任务）
+                                const latestTask = tasks[0];
+                                console.log('切换到新任务:', latestTask.id, '跳过加载结果');
+                                // 切换到新任务，但跳过 loadResults（等待实时推送）
+                                switchTask(latestTask.id, true);
+                                // 更新任务列表
+                                loadTasks();
+                            }
+                        });
+                    }, 1000);
+                } else {
+                    alert('搜索失败：' + (response.error || '未知错误'));
+                }
+            });
+        });
+
+        // 取消任务
+        $('#cancelTaskBtn').on('click', function() {
+            if (!currentTaskId) return;
+            
+            $.ajax({
+                url: `/tasks/${currentTaskId}`,
+                method: 'DELETE',
+                success: function(response) {
+                    if (response.success) {
+                        loadTasks();
+                        $('#cancelTaskBtn').addClass('d-none');
+                    }
+                }
+            });
+        });
+
+        // 点击任务切换
+        $(document).on('click', '.task-item', function() {
+            const taskId = $(this).data('task-id');
+            switchTask(taskId);
+        });
+
+        // 初始化
+        let lastTaskStatus = null;
+        
+        $(document).ready(function() {
+            loadTasks();
+            initSSE();
+        });
+
+        // 显示搜索结果
+        function displayResults(results) {
+            const tbody = $('#resultsBody');
+            tbody.empty();
+            
+            if (!results || results.length === 0) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem;"></i>
+                            暂无搜索结果
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+            
+            // 按创建时间排序
+            const sortedResults = results.sort((a, b) => {
+                const timeA = new Date(a.created_at || 0);
+                const timeB = new Date(b.created_at || 0);
+                return timeB - timeA;  // 降序排序
+            });
+            
+            sortedResults.forEach(result => {
+                const row = `
+                    <tr>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <strong>${result.event_name || '-'}</strong>
+                            </div>
+                        </td>
+                        <td>${result.city || '-'}</td>
+                        <td>${result.event_date || '-'}</td>
+                        <td>${result.area || '-'}</td>
+                        <td>${result.price || '-'}</td>
+                        <td>${result.quantity || '-'}</td>
+                        <td>${result.contact || '-'}</td>
+                        <td>${result.notes || '-'}</td>
+                        <td>${formatDateTime(result.created_at) || '-'}</td>
+                        <td>
+                            <div class="btn-group">
+                                ${result.note_url ? `
+                                    <a href="${result.note_url}" target="_blank" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        查看原文
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        // 停止任务
+        $(document).on('click', '.stop-task', function(e) {
+            e.stopPropagation();
+            const taskId = $(this).data('task-id');
+            if (confirm('确定要停止此任务吗？')) {
+                $.post(`/tasks/${taskId}/stop`, function(response) {
+                    if (response.success) {
+                        loadTasks();
+                    } else {
+                        alert('停止任务失败：' + (response.error || '未知错误'));
+                    }
+                });
+            }
+        });
+
+        // 删除任务
+        $(document).on('click', '.delete-task', function(e) {
+            e.stopPropagation();
+            const taskId = $(this).data('task-id');
+            if (confirm('确定要删除此任务吗？此操作不可恢复。')) {
+                $.post(`/tasks/${taskId}/delete`, function(response) {
+                    if (response.success) {
+                        loadTasks();
+                        if (currentTaskId === taskId) {
+                            $('#resultsBody').empty();
+                            $('#currentTaskTitle').text('搜索结果');
+                        }
+                    } else {
+                        alert('删除任务失败：' + (response.error || '未知错误'));
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html> 
